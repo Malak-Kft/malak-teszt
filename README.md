@@ -8,8 +8,13 @@ A [Malak Kft.](https://malaktech.hu) felujitott laptopokat arul; ezzel a program
 es a vevok is lefuttathatjak a sajat gepukon.
 
 ## Letoltes
-A legfrissebb valtozat: [Releases](../../releases/latest) - a `.zip`-ben az exe, egy rovid leiras es a SHA-256.
-Nem kell telepiteni: duplaklikk, majd a Windows kerdesere (UAC) Igen.
+A legfrissebb valtozat: [Releases](../../releases/latest).
+
+- **Windows:** `malak-teszt_es-bench.exe` (vagy a `.zip`: exe + leiras + SHA-256). Nem kell telepiteni: duplaklikk, majd a Windows kerdesere (UAC) Igen.
+- **Windows, B terv:** `malak-teszt.bat` - ugyanaz az adatgyujtes egy belenezheto parancsfajlban, ha az .exe nem indul (rovidebb benchmark).
+- **Mac:** `malak-teszt-mac.command` - letoltes utan Terminalban: `bash ~/Downloads/malak-teszt-mac.command` (a bongeszobol letoltott fajl dupla kattintasra nem futtathato, mert a letoltes nem tartja meg a futtatasi jogot).
+
+Mindharom maga general egy bongeszo-kodot, megnyitja vele a malaktech.hu/teszt oldalt, es oda kuldi az eredmenyt.
 
 ## Mit csinal a program
 - **Kiolvassa:** gep tipusa, szeriaszama, CPU / RAM / GPU / SSD (SMART, kopas), akkumulator (battery report),
@@ -29,6 +34,8 @@ Eredmeny es naplo helyben: `Asztal\malak-teszt`.
 - `GL.cs` - OpenGL kitoltes-teszt
 - `Ext.cs` - Cinebench R15 es FurMark inditasa, pontszam, mag-orajel mintavetel, NVIDIA GPU naplo, hibrid grafika
 - `collect.ps1` - a gepadat-gyujto PowerShell-szkript (az exe-be agyazva)
+- `malak-teszt.bat` - Windows B terv: ugyanaz a gyujto + rovid benchmark, .exe nelkul
+- `malak-teszt-mac.command` - Mac segedszkript (system_profiler, akku, MDM/DEP, FileVault, opcionalis rovid benchmark)
 - `build.sh` - forditas mono `mcs`-sel a .NET Framework 4.8 referencia-szerelvenyei ellen
 - `.github/workflows/build.yml` - automatikus forditas es kiadas
 

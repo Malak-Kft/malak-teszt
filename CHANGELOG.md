@@ -1,5 +1,12 @@
 # Valtozasok
 
+## v3.6.1 (2026-11-08)
+- Az .exe valtozatlan (3.6.0). A kiadasba bekerult a **Mac-segedszkript** (`malak-teszt-mac.command`) es a **Windows B terv** (`malak-teszt.bat`) is, igy a malaktech.hu-rol nem kell semmilyen szkriptet letolteni.
+- Mindketto, mint az .exe: sajat bongeszo-kodot general, megnyitja a malaktech.hu/teszt/?k=KOD oldalt, es oda kuldi az eredmenyt.
+- `malak-teszt.bat`: a v3.6 gyujto (gepnev / felhasznalonev nelkul, MDM-bol csak a domain, `lock.mdm` osszesito).
+- `malak-teszt-mac.command`: a system_profiler kimenetebol a gep neve es a felhasznalo neve kimarad.
+- GitHub Actions: a .bat PowerShell-reszet Windowson, a Mac-szkriptet macOS-en szintaxis-ellenorzi a build elott.
+
 ## v3.6 (2026-11-08)
 - A program **nem tolt le es nem futtat kulso kodot**: csak az .exe-be epitett (azzal egyutt alairt) gyujto-szkript fut. Korabban induláskor a malaktech.hu-rol toltotte le a friss valtozatot.
 - **Energiaellatas a meres idejere maxon, az egesz rendszerre:** sajat ideiglenes sema (Ultimate Performance / Nagy teljesitmeny masolata, vagy ha a gepen nincs ilyen - pl. Modern Standby laptopok -, a jelenlegi sema maxra hangolt masolata): CPU min/max 100%, boost agressziv, EPP 0, magparkolas ki, PCIe ASPM ki, alvas/lemez/kepernyo-idozito ki, halozatrol es akkurol is. Emellett a Windows 10/11 energiamod-csuszka: Legjobb teljesitmeny. A vegen minden visszaall; ha a program felbeszakad, a kovetkezo inditas allitja vissza.
