@@ -1,0 +1,70 @@
+name: build
+
+# Minden push-ra lefordul (ellenorzes). Verzio-tagre (pl. v3.6.0) kiadas is keszul:
+# malak-teszt_es-bench.exe + malak-teszt_es-bench-vX.zip + SHA256.txt a GitHub Releases-be.
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  pscheck:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: collect.ps1 szintaxis-ellenorzes
+        shell: pwsh
+        run: |
+          $t=$null; $e=$null
+          [void][System.Management.Automation.Language.Parser]::ParseFile("$PWD\collect.ps1",[ref]$t,[ref]$e)
+          if($e){ $e | % { "{0}: {1}" -f $_.Extent.StartLineNumber, $_.Message }; exit 1 } else { "collect.ps1: szintaxis OK" }
+
+  build:
+    needs: pscheck
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: mono telepitese
+        run: sudo apt-get update -q && sudo apt-get install -y -q mono-mcs zip
+
+      - name: forditas
+        run: ./build.sh
+
+      - name: ZIP osszeallitasa
+        run: |
+          VER="${GITHUB_REF_NAME#v}"
+          [ "${GITHUB_REF_TYPE}" = "tag" ] || VER="dev-${GITHUB_SHA::7}"
+          mkdir -p pkg
+          cp out/malak-teszt_es-bench.exe pkg/
+          cp OLVASSEL.txt pkg/
+          (cd pkg && sha256sum malak-teszt_es-bench.exe > SHA256.txt)
+          (cd pkg && zip -9 -q "../malak-teszt_es-bench-${VER}.zip" *)
+          echo "ZIP=malak-teszt_es-bench-${VER}.zip" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: malak-teszt_es-bench
+          path: |
+            out/malak-teszt_es-bench.exe
+            ${{ env.ZIP }}
+
+      - name: kiadas (csak verzio-tagnel)
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # ha a kiadast a weboldalon hoztad letre, abba tolti fel a fajlokat; ha nincs, letrehozza
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" out/malak-teszt_es-bench.exe "$ZIP" pkg/SHA256.txt --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" \
+              out/malak-teszt_es-bench.exe "$ZIP" pkg/SHA256.txt \
+              --title "malak-teszt $GITHUB_REF_NAME" \
+              --notes-file CHANGELOG-release.md
+          fi
