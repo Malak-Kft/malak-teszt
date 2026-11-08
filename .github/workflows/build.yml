@@ -23,9 +23,24 @@ jobs:
           $t=$null; $e=$null
           [void][System.Management.Automation.Language.Parser]::ParseFile("$PWD\collect.ps1",[ref]$t,[ref]$e)
           if($e){ $e | % { "{0}: {1}" -f $_.Extent.StartLineNumber, $_.Message }; exit 1 } else { "collect.ps1: szintaxis OK" }
+      - name: malak-teszt.bat PowerShell-resz szintaxis-ellenorzes
+        shell: pwsh
+        run: |
+          $s=[IO.File]::ReadAllText("$PWD\malak-teszt.bat"); $i=$s.IndexOf([char]10+'#PSSTART'); if($i -lt 0){ "nincs #PSSTART"; exit 1 }
+          $t=$null; $e=$null
+          [void][System.Management.Automation.Language.Parser]::ParseInput($s.Substring($i),[ref]$t,[ref]$e)
+          if($e){ $e | % { "{0}: {1}" -f $_.Extent.StartLineNumber, $_.Message }; exit 1 } else { "malak-teszt.bat: szintaxis OK" }
+
+  maccheck:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: malak-teszt-mac.command szintaxis-ellenorzes
+        run: |
+          bash -n malak-teszt-mac.command && echo "malak-teszt-mac.command: szintaxis OK"
 
   build:
-    needs: pscheck
+    needs: [pscheck, maccheck]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -44,6 +59,7 @@ jobs:
           cp out/malak-teszt_es-bench.exe pkg/
           cp OLVASSEL.txt pkg/
           (cd pkg && sha256sum malak-teszt_es-bench.exe > SHA256.txt)
+          sha256sum malak-teszt.bat malak-teszt-mac.command >> pkg/SHA256.txt
           (cd pkg && zip -9 -q "../malak-teszt_es-bench-${VER}.zip" *)
           echo "ZIP=malak-teszt_es-bench-${VER}.zip" >> "$GITHUB_ENV"
 
@@ -61,10 +77,10 @@ jobs:
         run: |
           # ha a kiadast a weboldalon hoztad letre, abba tolti fel a fajlokat; ha nincs, letrehozza
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" out/malak-teszt_es-bench.exe "$ZIP" pkg/SHA256.txt --clobber
+            gh release upload "$GITHUB_REF_NAME" out/malak-teszt_es-bench.exe "$ZIP" pkg/SHA256.txt malak-teszt.bat malak-teszt-mac.command --clobber
           else
             gh release create "$GITHUB_REF_NAME" \
-              out/malak-teszt_es-bench.exe "$ZIP" pkg/SHA256.txt \
+              out/malak-teszt_es-bench.exe "$ZIP" pkg/SHA256.txt malak-teszt.bat malak-teszt-mac.command \
               --title "malak-teszt $GITHUB_REF_NAME" \
               --notes-file CHANGELOG-release.md
           fi
