@@ -1,0 +1,20 @@
+Malak Tech teszt (malak-teszt_es-bench.exe)
+===========================================
+
+Laptop / asztali PC teszt es benchmark a malaktech.hu/teszt oldalhoz.
+Nem telepit semmit. Futtasd duplaklikkel, a Windows kerdesere (UAC) valaszolj Igen-nel.
+
+Mit csinal:
+- kiolvassa a gep adatait (tipus, szeriaszam, CPU/RAM/GPU/SSD, akku, BIOS-jelszo allapota,
+  BitLocker, Windows-licenc, ceges MDM/Autopilot regisztracio - csak a ceg domainje);
+- CPU / RAM / GPU / SSD meres (ha telepitve van: Cinebench R15, FurMark);
+- a meres idejere maxra allitja az energiaellatast, a vegen visszaallitja;
+- az eredmenyt elkuldi a malaktech.hu/teszt oldalra, a gep szeriaszamahoz mentve.
+
+Eredmeny es naplo: Asztal\malak-teszt mappa.
+
+Ellenorzes: a SHA256.txt-ben levo ertek egyezzen az exe ertekevel
+(PowerShell: Get-FileHash .\malak-teszt_es-bench.exe).
+
+Forraskod (nyilt, MIT licenc): https://github.com/Malak-Kft/malak-teszt
+Kapcsolat: info@malaktech.hu
