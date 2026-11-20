@@ -32,7 +32,7 @@ jobs:
           if($e){ $e | % { "{0}: {1}" -f $_.Extent.StartLineNumber, $_.Message }; exit 1 } else { "malak-teszt.bat: szintaxis OK" }
 
   maccheck:
-    runs-on: macos-latest
+    runs-on: ubuntu-24.04 # 2026-11-20: a macOS-futtato gyakran nem indul el; a bash -n Linuxon ugyanaz
     steps:
       - uses: actions/checkout@v4
       - name: malak-teszt-mac.command szintaxis-ellenorzes
