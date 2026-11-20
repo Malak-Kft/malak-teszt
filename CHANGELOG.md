@@ -4,6 +4,7 @@
 - **Wi-Fi kartya:** a gyujto (exe es .bat) kiolvassa a Wi-Fi kartya nevet es generaciojat (Wi-Fi 4/5/6/6E/7) - a nevbol (beepitett tablazat), ennek hianyaban a meghajto altal tamogatott szabvanyokbol (`netsh wlan show drivers`).
 - **Mobilnet (WWAN) modem:** halozati adapter (Wireless WAN), PnP eszkoz (letiltott is) es `netsh mbn` alapjan; modem neve, LTE/5G, letiltva-e, van-e SIM. Az IMEI, SIM- es elofizeto-azonositok NEM kerulnek a jelentesbe.
 - Uj JSON-mezo: `conn` = { wifi[], wifiName, wifiGen, wifiStandards, wwan{present, name, tech, disabled, sim, adapters[], devices[], mbn} }.
+- Mobilnet-technologia: a Quectel EM05/EM06/EM07, EM120R/EM160R es a Surface Mobile Broadband modem LTE-kent jelenik meg.
 - Mac: a Wi-Fi adat a meglevo system_profiler (SPAirPortDataType) kimenetbol jon, a Macekben nincs mobilnet modem.
 
 ## v3.6.1 (2026-11-08)
