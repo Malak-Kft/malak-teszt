@@ -157,7 +157,7 @@ try {
   $wwanPresent = [bool]($wwanAd.Count -or $pnpBest.Count -or $mbnHas)
   $wwanDisabled = $wwanPresent -and -not (@($wwanAd | ? { [string]$_.Status -ne 'Disabled' }).Count) -and (@($pnpBest | ? { $_.status -eq 'OK' }).Count -eq 0)
   $tech = $null
-  if ($wwanPresent) { $all = ($wwanName + ' ' + (($wwanPnp | % { $_.name }) -join ' ') + ' ' + $mbn); if ($all -match '\b5G\b|FM350|FM101|RM5\d\d|X5[05]|X6[25]|SDX5|SDX6|EM9[12]\d\d|5G NR') { $tech = '5G' } elseif ($all -match 'LTE|4G|L8[2-6]0|XMM|EM7\d\d\d|DW58|HP lt|Snapdragon|MC7') { $tech = 'LTE' } else { $tech = 'mobilnet' } }
+  if ($wwanPresent) { $all = ($wwanName + ' ' + (($wwanPnp | % { $_.name }) -join ' ') + ' ' + $mbn); if ($all -match '\b5G\b|FM350|FM101|RM5\d\d|X5[05]|X6[25]|SDX5|SDX6|EM9[12]\d\d|5G NR') { $tech = '5G' } elseif ($all -match 'LTE|4G|L8[2-6]0|XMM|EM7\d\d\d|EM0[5-7]|EM1[26]0R|DW5[5-9]|HP lt|Snapdragon|MC7|Surface Mobile Broadband') { $tech = 'LTE' } else { $tech = 'mobilnet' } }
   $conn = [pscustomobject]@{
     wifi = @($wifiOut)
     wifiName = $(if($wifiOut.Count){ $wifiOut[0].name })
