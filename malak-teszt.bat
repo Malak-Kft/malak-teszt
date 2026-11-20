@@ -115,6 +115,57 @@ $cams = ($pnpAll | ? { $_.Class -match 'Camera|Image' }).FriendlyName
 $bt = ($pnpAll | ? { $_.Class -eq 'Bluetooth' }).FriendlyName
 $tpad = ($pnpAll | ? { $_.FriendlyName -match 'touchpad|touch pad|precision' }).FriendlyName
 $net = Get-NetAdapter | % { [pscustomobject]@{ name=$_.Name; desc=$_.InterfaceDescription; status=[string]$_.Status; speed=$_.LinkSpeed } }
+# --- v3.7 Wi-Fi kartya (+ generacio) es mobilnet (WWAN) modem ---
+$conn = $null
+try {
+  $phyNet = @(Get-NetAdapter -Physical -IncludeHidden)
+  $wlanTxt = ''; try { $wlanTxt = (& netsh wlan show drivers 2>$null) -join [string][char]10 } catch {}
+  function WifiGen($name, $txt) {
+    $n = [string]$name
+    if ($n -match 'Wi-?Fi ?7|BE ?20[0-2]|BE ?17[0-9]{2}|\bBE\d{3}\b|QCNCM865|WCN785|MT7925|RZ717') { return 'Wi-Fi 7' }
+    if ($n -match 'Wi-?Fi ?6E|AX21[01]|AX411|AX16[79]\d|MT7922|RZ616|QCNFA765|WCN685|RTL8852CE') { return 'Wi-Fi 6E' }
+    if ($n -match 'Wi-?Fi ?6\b|AX20[0-3]|AX101|AX16[5]\d|AX500|MT7921|RZ608|QCA6390|QCA206|RTL885[12]|Wireless-AX|802\.11ax') { return 'Wi-Fi 6' }
+    if ($txt -match '802\.11be') { return 'Wi-Fi 7' }
+    if ($txt -match '802\.11ax') { if ($txt -match '6 ?GHz') { return 'Wi-Fi 6E' } else { return 'Wi-Fi 6' } }
+    if ($n -match 'Wireless-AC|\bAC ?\d{4}|\b(9260|9560|9462|9461|8265|8260|7265|7260|3165|3168)\b|QCA61[x0-9]4|QCA9377|RTL882[12]|802\.11ac|Dual Band Wireless-AC') { return 'Wi-Fi 5' }
+    if ($txt -match '802\.11ac') { return 'Wi-Fi 5' }
+    if ($n -match 'Wireless-N|Centrino|802\.11n|RTL8723|RTL8188|AR9\d{3}|N \d{4}') { return 'Wi-Fi 4' }
+    if ($txt -match '802\.11n') { return 'Wi-Fi 4' }
+    return $null
+  }
+  $std = @([regex]::Matches($wlanTxt, '802\.11(be|ax|ac|a|b|g|n)\b') | % { $_.Value } | select -Unique)
+  $wifiAd = @($phyNet | ? { [string]$_.PhysicalMediaType -match '802\.11' -or $_.InterfaceDescription -match 'Wi-?Fi|Wireless|WLAN|802\.11' } | ? { $_.InterfaceDescription -notmatch 'Wi-?Fi Direct|Virtual|Bluetooth|WAN Miniport' })
+  $wifiOut = @($wifiAd | % {
+    $g = WifiGen $_.InterfaceDescription ''; $src = 'nev'
+    if (-not $g) { $g = WifiGen $_.InterfaceDescription $wlanTxt; $src = $(if($g){'meghajto'}else{$null}) }
+    [pscustomobject]@{ name=$_.InterfaceDescription; gen=$g; source=$src; standards=($std -join ' '); status=[string]$_.Status; driver=$_.DriverVersionString }
+  })
+  # mobilnet: halozati adapter (Wireless WAN), PnP eszkoz-nev (letiltott is), netsh mbn
+  $wwanRx = 'WWAN|Mobile Broadband|Mobil sz.lless.v|\bLTE\b|\b5G\b|Snapdragon(\(TM\))? X\d+|Fibocom|Sierra Wireless|Quectel|Telit|XMM|Huawei ME\d|Dell Wireless 5[5-9]\d\d|DW5[5-9]\d\d|HP lt\d{4}|\bEM[0-9]{4}\b|\bL8[2-6]0\b|FM350|FM101|RM5\d\d|MC7\d{3}|Generic Mobile Broadband'
+  $wwanAd = @($phyNet | ? { [string]$_.PhysicalMediaType -match 'Wireless WAN|BroadBand|Mobile' -or $_.InterfaceDescription -match $wwanRx } | ? { $_.InterfaceDescription -notmatch 'Wi-?Fi|802\.11|Bluetooth' })
+  $wwanPnp = @(Get-PnpDevice | ? { $_.Class -match '^(Net|Modem|Ports|USB|System|MobileBroadband)$' -and $_.FriendlyName -match $wwanRx -and $_.FriendlyName -notmatch 'Wi-?Fi|802\.11|Bluetooth|WAN Miniport|Root Enumerator' } | % { [pscustomobject]@{ name=$_.FriendlyName; cls=$_.Class; status=[string]$_.Status; present=[bool]$_.Present } })
+  $mbn = ''; try { $mbn = (& netsh mbn show interfaces 2>$null) -join [string][char]10 } catch {}
+  $mbnHas = ($mbn -match '(?im)^\s*(Name|N.v)\s*:') -and ($mbn -notmatch 'nincs|There is no|not running|nem fut')
+  # adatvedelem: IMEI / SIM / elofizeto azonositok kimaradnak
+  $mbn = (($mbn -split [string][char]10) | ? { $_ -notmatch '(?i)Device Id|Eszk.zazonos|Subscriber|El.fizet|SIM ICC|ICCID|IMEI|IMSI|Phone|Telefonsz|GUID|Physical address|Fizikai c.m' }) -join [string][char]10
+  $sim = $null; try { $ri = (& netsh mbn show readyinfo interface=* 2>$null) -join ' '; if ($ri -match '(?i)SIM ?not ?inserted|nincs ?SIM|SimNotInserted|No ?SIM') { $sim = $false } elseif ($ri -match '(?i)Ready State\s*:\s*Ready|K.sz\b|Initialized') { $sim = $true } } catch {}
+  $wwanName = $null
+  if ($wwanAd.Count) { $wwanName = $wwanAd[0].InterfaceDescription }
+  $pnpBest = @($wwanPnp | ? { $_.present } | sort @{e={ if($_.name -match 'Fibocom|Sierra|Quectel|Telit|XMM|Snapdragon|Dell Wireless|DW5|HP lt|EM\d|FM350|RM5|L8[2-6]0|MC7'){0}else{1} }})
+  if ($pnpBest.Count -and (-not $wwanName -or $wwanName -match 'Generic|Mobile Broadband|Mobil')) { $wwanName = $pnpBest[0].name }
+  if (-not $wwanName -and $mbnHas -and ($mbn -match '(?im)^\s*(Model|Modell)\s*:\s*(.+)$')) { $wwanName = $Matches[2].Trim() }
+  $wwanPresent = [bool]($wwanAd.Count -or $pnpBest.Count -or $mbnHas)
+  $wwanDisabled = $wwanPresent -and -not (@($wwanAd | ? { [string]$_.Status -ne 'Disabled' }).Count) -and (@($pnpBest | ? { $_.status -eq 'OK' }).Count -eq 0)
+  $tech = $null
+  if ($wwanPresent) { $all = ($wwanName + ' ' + (($wwanPnp | % { $_.name }) -join ' ') + ' ' + $mbn); if ($all -match '\b5G\b|FM350|FM101|RM5\d\d|X5[05]|X6[25]|SDX5|SDX6|EM9[12]\d\d|5G NR') { $tech = '5G' } elseif ($all -match 'LTE|4G|L8[2-6]0|XMM|EM7\d\d\d|DW58|HP lt|Snapdragon|MC7') { $tech = 'LTE' } else { $tech = 'mobilnet' } }
+  $conn = [pscustomobject]@{
+    wifi = @($wifiOut)
+    wifiName = $(if($wifiOut.Count){ $wifiOut[0].name })
+    wifiGen = $(if($wifiOut.Count){ $wifiOut[0].gen })
+    wifiStandards = ($std -join ' ')
+    wwan = [pscustomobject]@{ present=$wwanPresent; name=$wwanName; tech=$tech; disabled=[bool]$wwanDisabled; sim=$sim; adapters=@($wwanAd | % { [pscustomobject]@{ name=$_.InterfaceDescription; status=[string]$_.Status; media=[string]$_.PhysicalMediaType } }); devices=@($wwanPnp); mbn=$(if($mbnHas){ $mbn }) }
+  }
+} catch {}
 $tpm = Get-Tpm; $tpmw = G Win32_Tpm root\cimv2\security\microsofttpm
 $bl = Get-BitLockerVolume | % { [pscustomobject]@{ vol=$_.MountPoint; prot=[string]$_.ProtectionStatus; status=[string]$_.VolumeStatus; pct=$_.EncryptionPercentage; method=[string]$_.EncryptionMethod } }
 $sb = Confirm-SecureBootUEFI
@@ -207,13 +258,14 @@ Write-Host ('Kesz: CPU ' + $native.cpu1 + ' / ' + $native.cpuN + ', RAM ' + $nat
 if($pwOk -and $pwOrig){ powercfg /setactive $pwOrig 2>$null | Out-Null; Write-Host 'Energiasema visszaallitva.' }; if($pwTmp){ powercfg -delete $pwTmp 2>$null | Out-Null }
 }
 $obj = [ordered]@{
-  generated=(Get-Date).ToString('s'); tool='malaktech.hu/teszt bat v3.6'; platform='windows'; admin=$isAdmin
+  generated=(Get-Date).ToString('s'); tool='malaktech.hu/teszt bat v3.7'; platform='windows'; admin=$isAdmin
   computer=[pscustomobject]@{ maker=$cs.Manufacturer; model=$cs.Model; family=$cs.SystemFamily; sku=$cs.SystemSKUNumber; version=$csp.Version; serial=$bios.SerialNumber; serial2=$csp.IdentifyingNumber; biosVer=$bios.SMBIOSBIOSVersion; biosDate=$bios.ReleaseDate; pcType=$cs.PCSystemType; biosPassword=$biosPw }
   cpu=[pscustomobject]@{ name=($cpu.Name -replace '\s+',' ').Trim(); cores=$cpu.NumberOfCores; threads=$cpu.NumberOfLogicalProcessors; mhz=$cpu.MaxClockSpeed }
   ram=[pscustomobject]@{ totalGb=[math]::Round($cs.TotalPhysicalMemory/1GB,1); slots=(G Win32_PhysicalMemoryArray).MemoryDevices; modules=@($ram) }
   disks=@($phys); gpus=@($gpus); monitors=@($mons); battery=$battery
   devices=[pscustomobject]@{ total=$pnpAll.Count; bad=@($badDev); touch=@($touch); pen=@($pen); biometric=@($bio); cameras=@($cams); bluetooth=@($bt); touchpad=@($tpad) }
   network=@($net)
+  conn=$conn
   os=[pscustomobject]@{ name=$os.Caption; version=$os.Version; build=$os.BuildNumber; display=$dispVer; installed=$os.InstallDate; boot=$os.LastBootUpTime; arch=$os.OSArchitecture; activation=$lic; lastHotfix=$hf }
   security=[pscustomobject]@{ tpmPresent=$tpm.TpmPresent; tpmReady=$tpm.TpmReady; tpmVersion=$tpmw.SpecVersion; secureBoot=$sb; bitlocker=@($bl); computrace=$ct }
   lock=[pscustomobject]@{ dsregcmd=$dsreg; autopilot=$autopilot; enrollments=@($enr); mdmTasks=$mdmTasks; mdm=$mdmSum }

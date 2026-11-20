@@ -6,5 +6,5 @@ using System.Runtime.CompilerServices;
 [assembly: AssemblyCompany("Malak Kft.")]
 [assembly: AssemblyProduct("malak-teszt")]
 [assembly: AssemblyCopyright("Copyright (c) 2026 Malak Kft. - MIT licenc")]
-[assembly: AssemblyFileVersion("3.6.0.0")]
-[assembly: AssemblyVersion("3.6.0.0")]
+[assembly: AssemblyFileVersion("3.7.0.0")]
+[assembly: AssemblyVersion("3.7.0.0")]

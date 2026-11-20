@@ -376,7 +376,7 @@ public static class Program
 	}
 
 	// ======================================================================= v3.4: allapot, naplo, reszeredmeny, kuldes
-	private const string VER = "3.6";
+	private const string VER = "3.7";
 
 	private static readonly StringBuilder logBuf = new StringBuilder();
 

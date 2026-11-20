@@ -1,5 +1,11 @@
 # Valtozasok
 
+## v3.7 (2026-11-20)
+- **Wi-Fi kartya:** a gyujto (exe es .bat) kiolvassa a Wi-Fi kartya nevet es generaciojat (Wi-Fi 4/5/6/6E/7) - a nevbol (beepitett tablazat), ennek hianyaban a meghajto altal tamogatott szabvanyokbol (`netsh wlan show drivers`).
+- **Mobilnet (WWAN) modem:** halozati adapter (Wireless WAN), PnP eszkoz (letiltott is) es `netsh mbn` alapjan; modem neve, LTE/5G, letiltva-e, van-e SIM. Az IMEI, SIM- es elofizeto-azonositok NEM kerulnek a jelentesbe.
+- Uj JSON-mezo: `conn` = { wifi[], wifiName, wifiGen, wifiStandards, wwan{present, name, tech, disabled, sim, adapters[], devices[], mbn} }.
+- Mac: a Wi-Fi adat a meglevo system_profiler (SPAirPortDataType) kimenetbol jon, a Macekben nincs mobilnet modem.
+
 ## v3.6.1 (2026-11-08)
 - Az .exe valtozatlan (3.6.0). A kiadasba bekerult a **Mac-segedszkript** (`malak-teszt-mac.command`) es a **Windows B terv** (`malak-teszt.bat`) is, igy a malaktech.hu-rol nem kell semmilyen szkriptet letolteni.
 - Mindketto, mint az .exe: sajat bongeszo-kodot general, megnyitja a malaktech.hu/teszt/?k=KOD oldalt, es oda kuldi az eredmenyt.
